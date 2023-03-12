@@ -20,6 +20,14 @@ namespace Jwt.Controllers
             _config = config;
         }
 
+        [HttpGet]
+        public IActionResult Get()
+        {
+            var currentUser = GetCurrentUser();
+
+            return Ok($"Hola {currentUser.FirstName}, tu eres un {currentUser.Rol}");
+        }
+
         [HttpPost]
         public IActionResult Login(LoginUser userLogin)
         {
@@ -74,6 +82,27 @@ namespace Jwt.Controllers
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private UserModel GetCurrentUser()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (identity != null)
+            {
+                var userClaims = identity.Claims;
+
+                return new UserModel
+                {
+                    Username = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.NameIdentifier)?.Value,
+                    EmailAddress = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Email)?.Value,
+                    FirstName = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.GivenName)?.Value,
+                    LastName = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Surname)?.Value,
+                    Rol = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value
+                };
+            }
+
+            return null;
         }
 
     }
